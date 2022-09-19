@@ -1,0 +1,8 @@
+скачать httplib 
+install httlib 
+
+
+set user for db in env
+
+set postgres config for enter  
+host    all         all         0.0.0.0/0          trust >> pg_hba.conf
