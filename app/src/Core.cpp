@@ -21,7 +21,7 @@ void fill(nlohmann::json& j, Item& item) {
 }
 
 void toModels(nlohmann::json& j, std::unordered_map<std::string, Item>& models,
-			std::unordered_map<std::string, int>& parrentFolders) {
+			std::unordered_map<std::string, int>& parentFolders) {
 	
 	
 	auto it = j["items"].begin();
@@ -34,7 +34,7 @@ void toModels(nlohmann::json& j, std::unordered_map<std::string, Item>& models,
 			return ;
 		}
 		if (item.parentId.empty() == false) {
-			parrentFolders[item.parentId] += item.size;
+			parentFolders[item.parentId] += item.size;
 		}
 		models.insert(std::make_pair(item.id, item));
 		it++;
@@ -99,7 +99,7 @@ void importItems(const httplib::Request &req, httplib::Response &res) {
 	DbResponce*								result;
 	Db*										dbObj;
 	std::unordered_map<std::string, Item>	models;
-	std::unordered_map<std::string, int>	parrentFolders;
+	std::unordered_map<std::string, int>	parentFolders;
 	nlohmann::json							j;
 
 	try {
@@ -115,11 +115,11 @@ void importItems(const httplib::Request &req, httplib::Response &res) {
 	if (j.count("items") == 0 || j.count("updateDate") == 0) {
 		result = new ErrorDbResponce(400, "Validation failed");
 	} else {
-		toModels(j, models, parrentFolders);
+		toModels(j, models, parentFolders);
 		if (models.empty()) {
 			result = new ErrorDbResponce(400, "Validation failed");
 		} else {
-			result = dbObj->import(models, parrentFolders, j["updateDate"]);
+			result = dbObj->import(models, parentFolders, j["updateDate"]);
 		}
 	}
 
