@@ -103,33 +103,40 @@ std::string Db::generateUpdateQuery(std::string id,  std::string date,
 
 std::string Db::generateUpdateSizeQuery(std::string parrentId, int changeSizeFor) {
 	std::string sql;
+	Item		item;
 
-	int size = this->getItemSize(parrentId);
-	sql.append("UPDATE items SET size = " \
-		+ std::to_string(size + changeSizeFor) + " WHERE id = " + this->setStrSQL(parrentId) + "; ");
-	auto res = this->executeQuery(SQL_SELECT_PARRENT + this->setStrSQL(parrentId), false);
-	if (res.empty() == false) {
-		sql.append(this->generateUpdateSizeQuery(res.begin().at(ID).as(std::string()), size + changeSizeFor) );
+	item = this->getItem(parrentId);
+	if (item.isExist()) {
+		sql.append("UPDATE items SET size = " \
+				+ std::to_string(item.size + changeSizeFor) + " WHERE id = " + this->setStrSQL(parrentId) + "; ");
+		auto res = this->executeQuery(SQL_SELECT_PARRENT + this->setStrSQL(parrentId), false);
+		if (res.empty() == false) {
+			sql.append(this->generateUpdateSizeQuery(res.begin().at(ID).as(std::string()), changeSizeFor) );
+		}
 	}
+	
 	return sql;
 }
 
 DbResponce* Db::deleteItem(std::string id, std::string updateDate) {
-	DbResponce*			item;
+	Item				item;
 	std::string			deleteQuery;
 	std::string			updateQuery;
+	std::string			updateSizeQuery;
 
 	if (!isDateValid(updateDate)) {
 		return new ErrorDbResponce(400, "Validation failed");
 	}
+	item = this->getItem(id);
+	if (item.isExist() == false) {
+		return new ErrorDbResponce(404, "Item not found");
+	}
 	try {
-		if (this->isItemExist(id) == false) {
-			return new ErrorDbResponce(404, "Item not found");
-		}
 		deleteQuery = generateDeleteQuery(id);
 		updateQuery = generateUpdateQuery(id, updateDate, id);
-		this->executeQuery(deleteQuery, true);
-		this->executeQuery(updateQuery, true);
+		updateSizeQuery = generateUpdateSizeQuery(item.parentId, item.size * -1);
+		std::cout  << "update size: " << updateSizeQuery << std::endl;
+		this->executeQuery(deleteQuery + updateQuery + updateSizeQuery, true);
 	}
 	catch(const std::exception& e) {
 		std::cerr << e.what() << '\n';
@@ -150,48 +157,43 @@ pqxx::result	Db::getParrent(std::string id) {
 	return res;
 }
 
-bool Db::isItemExist(std::string id) {
+Item Db::getItem(std::string id) {
+	pqxx::result	res;
+	Item			item;
+
 	try {
-		return executeQuery(SQL_SELECT_BY_ID + this->setStrSQL(id), false).empty() == false;
+		res = executeQuery(SQL_SELECT_BY_ID + this->setStrSQL(id), false);
 	}
 	catch(const std::exception& e) {
 		std::cerr << e.what() << '\n';
-		return false;
+		return item;
 	}
+	if (res.size() == 1) {
+		auto it = res.begin();
+		item.id = it.at(ID).as(std::string());
+		item.url = it.at(URL).as(std::string());
+		item.type =  it.at(TYPE).as(std::string());
+		item.size = it.at(SIZE).as(0);
+		item.parentId = it.at(PARRENT_ID).as(std::string());
+	}
+	return item;
+}
+
+bool Db::isItemExist(std::string id) {
+	return this->getItem(id).id.empty() == false;
 }
 
 int Db::getItemSize(std::string id) {
-	int size = 0;
-	try {
-		auto res = this->executeQuery(SQL_SELECT_BY_ID + this->setStrSQL(id), false);
-		size = res.begin().at(SIZE).as(0);
-	}
-	catch(const std::exception& e) {
-		std::cerr << e.what() << '\n';
-		return false;
-	}
-	return size;
+	return this->getItem(id).size;
 }
 
 std::string Db::getItemType(std::string id) {
-	std::string		type;
-
-	try {
-		auto result = executeQuery(SQL_SELECT_BY_ID + Db::setStrSQL(id), false);
-		if (result.empty() == false) {
-			type = result.begin().at(TYPE).as(std::string());
-		}
-	}
-	catch(const std::exception& e) {
-		std::cerr << e.what() << '\n';
-	}
-	return type;
+	return this->getItem(id).type;
 }
 
 DbResponce*		Db::import(std::unordered_map<std::string, Item>& models,
 					std::unordered_map<std::string, int>& parrentFolders, std::string updateDate) {
 	std::string sql;
-	// valid part 
 	auto it = models.begin();
 	if (isDateValid(updateDate) == false) {
 		return new ErrorDbResponce(400, "Validation failed");
@@ -200,25 +202,36 @@ DbResponce*		Db::import(std::unordered_map<std::string, Item>& models,
 		if ( it->second.isValid(*this, models) == false) {
 			return new ErrorDbResponce(400, "Validation failed");
 		}
-		sql.append(it->second.generateQuery(updateDate, *this, parrentFolders, models));
+		if (it->second.type == FOLDER_TYPE) {
+			sql.append(it->second.generateQuery(updateDate, *this, parrentFolders, models));
+		}
 		it++;
 	}
-	// std::cout << sql << std::endl;
-
 	try {
-		auto result = executeQuery(sql, true);
+		executeQuery(sql, true);
 	}
 	catch(const std::exception& e) {
 		std::cerr << e.what() << '\n';
+		return new ErrorDbResponce(400, "Validation failed");
 	}
-	// generate sqls 
-		// for insert and update
-		// for update parrentFolders (from map) -> take current size, update to new
-		// generateUpdateQuery() for every parrent folders
-
-	// execute sqls
+	sql.clear();
+	it = models.begin();
+	while (it != models.end()) {
+		if (it->second.type == FILE_TYPE) {
+			sql.append(it->second.generateQuery(updateDate, *this, parrentFolders, models));
+		}
+		it++;
+	}
+	try {
+		executeQuery(sql, true);
+	}
+	catch(const std::exception& e) {
+		std::cerr << e.what() << '\n';
+		return new ErrorDbResponce(400, "Validation failed");
+	}
 
 	return new EmptySuccessDbResponce();
 }
+
 
 

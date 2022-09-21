@@ -7,16 +7,15 @@ curl -X 'POST' \
 -d '{
   "items": [
     {
-      "id": "1",
+      "id": "42",
       "url": "/file/url1",
-      "parentId": "2",
-      "size": 234,
+      "parentId": "2222",
+      "size": 42,
       "type": "FILE"
     },
     {
-      "id": "2",
-      "type": "FOLDER",
-      "parentId": "4"
+      "id": "2222",
+      "type": "FOLDER"
     }
   ],
   "updateDate": "2022-05-28T21:12:01.000Z"

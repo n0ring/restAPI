@@ -36,6 +36,7 @@ public:
 		std::string getUpdateSQL(std::string, Db& db, 
 					std::unordered_map<std::string, int>& parrentFolders);
 		std::string getDateUpdateSQL( Db& db, std::string updateDate);
+		bool		isExist() { return this->id.empty() == false; }
 	//  id 
 			//	has id
 			// exist in db (if true change isUpdate)

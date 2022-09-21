@@ -38,6 +38,7 @@ class Db {
 							std::string updateDate);
 
 		pqxx::result	executeQuery(std::string query, bool isTransaction);
+		Item			getItem(std::string id);
 		std::string		setStrSQL(std::string param);
 		pqxx::result	getParrent(std::string id);
 		bool			isItemExist(std::string id);

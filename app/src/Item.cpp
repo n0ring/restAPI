@@ -109,6 +109,7 @@ std::string Item::getInsertSQL(std::string updateDate, Db& db) {
 	std::string sqlChildresInsert;
 	std::string sqlColumns("INSERT INTO items (id, type, date");
 	std::string updateDateSQL;
+	std::string updateSizeSQL;
 
 	std::string sqlValues("VALUES (" + setStrSQL(this->id) + ", " 
 			+ setStrSQL(this->type) + ", " + setStrSQL(updateDate));
@@ -127,6 +128,7 @@ std::string Item::getInsertSQL(std::string updateDate, Db& db) {
 		sqlChildresInsert.append(setStrSQL(this->parentId) + ", " + setStrSQL(this->id) + ");\n");
 		try {
 			updateDateSQL = db.generateUpdateQuery(this->parentId, updateDate, this->id);
+			updateSizeSQL = db.generateUpdateSizeQuery(this->parentId, this->size);
 		}
 		catch(const std::exception& e) {
 			std::cerr << e.what() << '\n';
@@ -134,7 +136,7 @@ std::string Item::getInsertSQL(std::string updateDate, Db& db) {
 	}
 	sqlColumns.append(") \n");
 	sqlValues.append("); \n");
-	return sqlColumns + sqlValues + sqlChildresInsert + updateDateSQL;
+	return sqlColumns + sqlValues + sqlChildresInsert + updateDateSQL + updateSizeSQL;
 }
 
 std::string Item::getUpdateSQL(std::string updateDate, Db& db,
@@ -143,15 +145,21 @@ std::string Item::getUpdateSQL(std::string updateDate, Db& db,
 	std::string sqlUpdateChilds;
 	std::string sqlItems("UPDATE items SET ");
 	std::string updateDateSQL;
+	Item		item = db.getItem(this->id);
+	int			sizeChange = 0;
+	std::string updateSizeSql;
 
+	if (item.type == FILE_TYPE) {
+		sizeChange = this->size - item.size;
+		std::cout << item.id << ": " << item.size << "-" << this->size << std::endl;
+	}
 	sqlItems.append("parentid=" + (this->parentId.empty() ? "null" : setStrSQL(this->parentId)) );
 	sqlItems.append(", url=" + (this->url.empty() ? "null" : setStrSQL(this->url)) );
-	sqlItems.append(", size="  + (this->type == FOLDER_TYPE ? "null" : std::to_string(this->size)) );
+	sqlItems.append(", size="  + (this->type == FOLDER_TYPE ? std::to_string(item.size) : std::to_string(this->size)) );
 	sqlItems.append(", date="  + setStrSQL(updateDate));
 	sqlItems.append(" WHERE id=" + setStrSQL(this->id) + ";\n");
 	auto parent = db.getParrent(this->id);
-
-	parrentFolders[this->parentId] -= db.getItemSize(this->id);
+	// parrentFolders[this->parentId] -= db.getItemSize(this->id);
 	if (parent.empty() && this->parentId.empty() == false) {
 		sqlUpdateChilds.append("INSERT INTO childrens (parrent_id, child_id) VALUES (");
 		sqlUpdateChilds.append(setStrSQL(this->parentId) + ", " + setStrSQL(this->id) + ");\n");
@@ -165,12 +173,13 @@ std::string Item::getUpdateSQL(std::string updateDate, Db& db,
 	}
 	try {
 		updateDateSQL = db.generateUpdateQuery(this->parentId, updateDate, this->id);
+		updateSizeSql = db.generateUpdateSizeQuery(this->parentId, sizeChange);
 	}
 	catch(const std::exception& e) {
 		std::cerr << e.what() << '\n';
 	}
 	
-	return sqlItems + sqlUpdateChilds + updateDateSQL;
+	return sqlItems + sqlUpdateChilds + updateDateSQL + updateSizeSql;
 }
 
 
@@ -185,21 +194,5 @@ std::string Item::generateQuery(std::string updateDate, Db& db,
 	} else {
 		sql = this->getInsertSQL(updateDate, db);
 	}
-
-	if (models.count(this->id)) {
-		currentItem = &(models[this->id]);
-	}
-	while (currentItem) { // from db in parrentSize too
-		if (currentItem->parentId.empty() == false &&  models.count(currentItem->parentId)) { // has parrent
-			parrentFolders[currentItem->parentId] += parrentFolders[currentItem->id];
-			currentItem = &(models[currentItem->parentId]);
-		} else {
-			break;
-		}
-	}
-	if (currentItem && currentItem->parentId.empty() == false) { // last parent in models not can go to db and create sql
-		sql.append(db.generateUpdateSizeQuery(currentItem->id, parrentFolders[currentItem->parentId]));
-	}
-	
 	return sql;
 }
