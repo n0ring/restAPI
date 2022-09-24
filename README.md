@@ -4,6 +4,8 @@ Server provided by httplib (header only library).
 
 Connet to Postgres with libpqxx library (install during deploy).
 
+Work with json provided by nlohmann/json (header only library).
+
 Deploy with docker (docker compose). Database and app in separate containers. 
 
 For start containers: 
