@@ -1,5 +1,12 @@
-# backendschool2022
-for start containers: 
+RestAPI app on C++ std=c++11 with Postgres and adminer. 
+
+Server provided by httplib (header only library).
+
+Connet to Postgres with libpqxx library (install during deploy).
+
+Deploy with docker (docker compose). Database and app in separate containers. 
+
+For start containers: 
 
 git clone git@github.com:n0ring/backendschool2022.git
 
