@@ -11,12 +11,12 @@ volumes:
       type: none
       o: bind
       device: ${DB_PATH}
-  code:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ${APP_PATH}
+  # code:
+  #   driver: local
+  #   driver_opts:
+  #     type: none
+  #     o: bind
+  #     device: ${APP_PATH}
 
 services:
   postgres:
@@ -33,8 +33,8 @@ services:
   gcc:
     build: requirements/gcc
     restart: always
-    volumes:
-      - code:/var/app
+    # volumes:
+    #   - code:/var/app
     networks:
       - app
     container_name: gcc

@@ -11,11 +11,12 @@ DB_PATH			= ./srcs/data-db
 all: up  
 
 build:	
+	cp -r ../app srcs/requirements/gcc/
 	$(COMPOSE_CMD_F) $(COMPOSE_FILE) build
 
 up:
 	mkdir -p $(DB_PATH)
-	# cp -r ../app srcs/requirements/gcc/
+	cp -r ../app srcs/requirements/gcc/
 	@$(COMPOSE_CMD_F) $(COMPOSE_FILE) $(UP) --build
 
 stop:
@@ -40,10 +41,11 @@ clean: down
 
 	
 fclean: down  
-	$(DOCKER_CMD_F) volume rm -f $$($(DOCKER_CMD_F) volume ls -q)
+	# $(DOCKER_CMD_F) volume rm -f $$($(DOCKER_CMD_F) volume ls -q)
 	$(DOCKER_CMD_F) system prune -a --force
 	$(DOCKER_CMD_F) system prune -f --volumes
 	rm -rf $(DB_PATH)
+	rm -rf srcs/requirements/gcc/app
 
 net:
 	$(DOCKER_CMD_F) network inspect srcs_app
