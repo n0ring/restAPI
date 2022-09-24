@@ -10,9 +10,9 @@ Deploy with docker (docker compose). Database and app in separate containers.
 
 For start containers: 
 
-git clone git@github.com:n0ring/backendschool2022.git
+git clone git@github.com:n0ring/restAPI.git
 
-cd backendschool2022/docker 
+cd restAPI/docker 
 
 In file srcs/.env need to set database path DB_PATH=(PWD + /srcs/data-db). For example :
 
