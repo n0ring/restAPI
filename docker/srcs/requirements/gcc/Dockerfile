@@ -18,5 +18,8 @@ RUN make
 
 RUN chmod +x restserver
 
+# for deploy
 ENTRYPOINT ["./restserver"]
+
+# for develop 
 # ENTRYPOINT ["tail", "-f", "/dev/null"]

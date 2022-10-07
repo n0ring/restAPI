@@ -32,9 +32,9 @@ echo "end of test"
 echo 
 
 
-# echo "Test to ubuntu id 4"
-# curl -X 'GET' \
-#   'https://triangle-1958.usr.yandex-academy.ru/nodes/4' \
-#   -H 'accept: application/json'
-# echo "end of test"
-# echo 
+echo "Test to ubuntu id 4"
+curl -X 'GET' \
+  'https://triangle-1958.usr.yandex-academy.ru/nodes/4' \
+  -H 'accept: application/json'
+echo "end of test"
+echo 

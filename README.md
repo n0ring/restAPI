@@ -1,8 +1,10 @@
 # RestAPI app on C++ std=c++11 with Postgres and adminer. 
 
+It is a backend app for store, update and delete information (id, size, url, type, parrent/child) about files and folders in database for service like yandexDisk. 
+
 Server provided by httplib (header only library).
 
-Connet to Postgres with libpqxx library (install during deploy).
+Connect to Postgres with libpqxx library (install during deploy).
 
 Work with json provided by nlohmann/json (header only library).
 
@@ -29,6 +31,8 @@ POST    http://localhost/imports (need http body)
 DELETE  http://localhost/delete/{ID}?date={DATE}
 
 Adminer work on http://localhost:8080.
+
+
 
 
 

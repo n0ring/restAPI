@@ -8,6 +8,8 @@ class EmptySuccessDbResponce : public DbResponce {
 		EmptySuccessDbResponce(void) {
 			this->status = 200;
 		} 
+
+		~EmptySuccessDbResponce(void) {}
 		virtual nlohmann::json	toJson(void) const {
 			return nlohmann::json();
 		};

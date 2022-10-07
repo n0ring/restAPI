@@ -8,6 +8,7 @@ class DbResponce {
 		int				status;
 		nlohmann::json	j;
 	public:
+		virtual ~DbResponce() {};
 		virtual nlohmann::json	toJson(void) const {};
 		virtual int				getStatus(void) const {};
 };
